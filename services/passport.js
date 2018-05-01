@@ -17,7 +17,7 @@ passport.deserializeUser((id, done) =>{
 	});
 });
 
-passport.use(new GoogleStrategy({
+/* passport.use(new GoogleStrategy({
 	clientID: keys.googleClientID,
 	clientSecret: keys.googleClientSecret,
 	callbackURL: '/auth/google/callback',
@@ -37,5 +37,28 @@ passport.use(new GoogleStrategy({
 				}
 			});		
 	}	
-));
+)); */
 
+// Refactoring to use the async/await syntax 
+
+passport.use(new GoogleStrategy({
+	clientID: keys.googleClientID,
+	clientSecret: keys.googleClientSecret,
+	callbackURL: '/auth/google/callback',
+	proxy: true
+	}, 
+	(accessToken, refreshToken, profile, done) => {
+		const existingUser = await User.findOne({googleId: profile.id})
+			
+		if(existingUser){
+			//already have a record with given profile id
+			done(null, existingUser);
+		} else {
+			// no user make new user
+			const user = await new User({ googleId: profile.id})
+			.save()
+			done(null, user);
+		}
+					
+	}	
+));
